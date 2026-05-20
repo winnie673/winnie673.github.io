@@ -6,13 +6,17 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="http://example.com">
-  <title>Archives: 2026 | Winnie673</title>
+  <title>Transformer-应用开发者视角 | Winnie673</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="Winnie673">
-<meta property="og:url" content="http://example.com/archives/2026/index.html">
+  <meta name="description" content="1、为什么大模型绕不开Transformer 在Transformer之前RNN和CNN的问题： RNN：  梯度消失：记不住长距离依赖 串行计算：训练速度慢  CNN：  局部感受野：只能看到局部窗口，想看全局要堆多层 长距离依赖弱：难以捕捉相隔很远的词  Transfromer：  引入self-attention自注意力机制 不需要逐步传递信息，一步即可计算 可利用GPU并行  Mamba：">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Transformer-应用开发者视角">
+<meta property="og:url" content="http://example.com/2026/05/20/Transformer-%E5%BA%94%E7%94%A8%E5%BC%80%E5%8F%91%E8%80%85%E8%A7%86%E8%A7%92/index.html">
 <meta property="og:site_name" content="Winnie673">
+<meta property="og:description" content="1、为什么大模型绕不开Transformer 在Transformer之前RNN和CNN的问题： RNN：  梯度消失：记不住长距离依赖 串行计算：训练速度慢  CNN：  局部感受野：只能看到局部窗口，想看全局要堆多层 长距离依赖弱：难以捕捉相隔很远的词  Transfromer：  引入self-attention自注意力机制 不需要逐步传递信息，一步即可计算 可利用GPU并行  Mamba：">
 <meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2026-05-20T12:49:36.000Z">
+<meta property="article:modified_time" content="2026-05-20T13:26:13.346Z">
 <meta property="article:author" content="John Doe">
 <meta name="twitter:card" content="summary">
   
@@ -124,103 +128,183 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            
+            <article id="post-Transformer-应用开发者视角" class="article article-type-post " itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
   
+    <h1 class="article-title" itemprop="name">
+      Transformer-应用开发者视角
+    </h1>
   
-    
-    
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2026" class="archive-year">2026</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2026/05/20/Transformer-%E5%BA%94%E7%94%A8%E5%BC%80%E5%8F%91%E8%80%85%E8%A7%86%E8%A7%92/" class="archive-article-date">
+
+        
+        <a href="/2026/05/20/Transformer-%E5%BA%94%E7%94%A8%E5%BC%80%E5%8F%91%E8%80%85%E8%A7%86%E8%A7%92/" class="archive-article-date">
   	<time datetime="2026-05-20T12:49:36.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2026-05-20</time>
 </a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2026/05/20/Transformer-%E5%BA%94%E7%94%A8%E5%BC%80%E5%8F%91%E8%80%85%E8%A7%86%E8%A7%92/">Transformer-应用开发者视角</a>
-    </h1>
-  
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p><strong>1、为什么大模型绕不开Transformer</strong></p>
+<p>在<strong>Transformer</strong>之前<strong>RNN</strong>和<strong>CNN</strong>的问题：</p>
+<p><strong>RNN</strong>：</p>
+<ul>
+<li>梯度消失：记不住长距离依赖</li>
+<li>串行计算：训练速度慢</li>
+</ul>
+<p><strong>CNN：</strong></p>
+<ul>
+<li>局部感受野：只能看到局部窗口，想看全局要堆多层</li>
+<li>长距离依赖弱：难以捕捉相隔很远的词</li>
+</ul>
+<p><strong>Transfromer：</strong></p>
+<ul>
+<li>引入self-attention自注意力机制</li>
+<li>不需要逐步传递信息，一步即可计算</li>
+<li>可利用GPU并行</li>
+</ul>
+<p><strong>Mamba：不可完全替代Transformer</strong></p>
+<p><strong>2、self-attention</strong></p>
+<p>每个token根据上下文动态调整自己的向量表示，所以模糊的prompt分散注意力，结构化的prompt让注意力更容易找到关键信息。</p>
+<p><strong>上下文质量决定注意力分配，注意力分配决定输出质量</strong></p>
+<p><strong>3、Multi-head Attention</strong></p>
+<p>语言之间关系多样：语义、语法、近距离依赖、指代关系等，一个头很难同时捕捉多种关系，多头注意力能够捕捉不同空间的语义并融合。</p>
+<p><strong>一段结构清晰的prompt使每个注意力头快速定位自己需要关注的部分。而一段信息密度相同的文字需要额外的计算开销来提取结构。</strong></p>
+<p><strong>4、Positional Encoding</strong></p>
+<p>Transformer本身是没有顺序的，即self-attention是不关注顺序的，但位置信息很重要，是硬编码进去的。早期利用正余弦函数编码，后期位置编码可训练。</p>
+<p><strong>模型在训练时见过的位置范围有限，即使可以外推，但效果会下降。因此上下文窗口有硬上限，超长上下文质量下降，重要信息放prompt开头或结尾，避免中间迷失问题。</strong></p>
+<p><strong>5、三大架构对比</strong></p>
+<ul>
+<li><p><strong>Encoder-Only：BERT</strong></p>
+<p>  双向注意力，理解能力强，做分类、实体识别、语义相似度效果好。</p>
+</li>
+<li><p><strong>Encoder-Decoder：T5</strong></p>
+<p>  先理解再生成，适合翻译、摘要这类序列到序列的任务。</p>
+</li>
+<li><p><strong>Decoder-Only：GPT</strong></p>
+<p>  单向注意力，自回归生成任务。</p>
+</li>
+</ul>
+<p><strong>Decoder-Only的Scaling效果好、即使是语言生成模型，通过prompt也能理解、任务统一就是预测下一个token训练效果好。</strong></p>
+<p><strong>对应用开发的启示：大模型的本质是续写，prompt的结构和位置影响生成质量。system prompt放开头定基调，关键指令放结尾定方向。</strong></p>
+<p><strong>6、Transformer的局限性</strong></p>
+<ul>
+<li><strong>O(n^2)的计算复杂度</strong>:token计费成本平方级增长</li>
+<li><strong>位置编码的外推问题</strong>：超长文本位置不可靠。RoPE等可缓解，但不是根治</li>
+<li><strong>中间迷失</strong>:关键信息放prompt开头和结尾</li>
+<li><strong>串行生成</strong>:生成比理解慢得多</li>
+</ul>
 
-        <div class="article-info info-on-right">
-          
-          
+      
 
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+
+      
+
+      
+        
+<div class="share-btn share-icons tooltip-left">
+  <div class="tooltip tooltip-east">
+    <span class="tooltip-item">
+      <a href="javascript:;" class="share-sns share-outer">
+        <i class="icon icon-share"></i>
+      </a>
+    </span>
+    <span class="tooltip-content">
+      <div class="share-wrap">
+        <div class="share-icons">
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="icon icon-weibo"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="icon icon-weixin"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="icon icon-qq"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="icon icon-douban"></i>
+          </a>
+          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a>
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="icon icon-facebook"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="icon icon-twitter"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="icon icon-google"></i>
+          </a>
         </div>
-        <div class="clearfix"></div>
-    </header>
+      </div>
+    </span>
+  </div>
+</div>
+
+<div class="page-modal wx-share js-wx-box">
+    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//pan.baidu.com/share/qrcode?url=http://example.com/2026/05/20/Transformer-%E5%BA%94%E7%94%A8%E5%BC%80%E5%8F%91%E8%80%85%E8%A7%86%E8%A7%92/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div class="mask js-mask"></div>
+      
+      <div class="clearfix"></div>
+    </div>
   </div>
 </article>
+
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2026/05/20/%E5%88%A9%E7%94%A8Github%E6%90%AD%E5%BB%BA%E8%87%AA%E5%B7%B1%E7%9A%84%E5%8D%9A%E5%AE%A2/" class="archive-article-date">
-  	<time datetime="2026-05-20T11:31:27.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2026-05-20</time>
-</a>
+<nav id="article-nav">
+  
+  
+    <a href="/2026/05/20/%E5%88%A9%E7%94%A8Github%E6%90%AD%E5%BB%BA%E8%87%AA%E5%B7%B1%E7%9A%84%E5%8D%9A%E5%AE%A2/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">利用Github搭建自己的博客</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
         </div>
-    	 
+        
+        
+    </div>
+</aside>
+
+
+
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2026/05/20/%E5%88%A9%E7%94%A8Github%E6%90%AD%E5%BB%BA%E8%87%AA%E5%B7%B1%E7%9A%84%E5%8D%9A%E5%AE%A2/">利用Github搭建自己的博客</a>
-    </h1>
+  
   
 
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2026/05/20/hello-world/" class="archive-article-date">
-  	<time datetime="2026-05-20T11:22:57.512Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2026-05-20</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2026/05/20/hello-world/">Hello World</a>
-    </h1>
   
 
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-  
-    </div></section>
   
 
-    
+  
 
 
           </div>
@@ -243,8 +327,8 @@
 	var yiliaConfig = {
 		mathjax: false,
 		isHome: false,
-		isPost: false,
-		isArchive: true,
+		isPost: true,
+		isArchive: false,
 		isTag: false,
 		isCategory: false,
 		open_in_new: false,

@@ -126,6 +126,117 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-Transformer-应用开发者视角" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2026/05/20/Transformer-%E5%BA%94%E7%94%A8%E5%BC%80%E5%8F%91%E8%80%85%E8%A7%86%E8%A7%92/">Transformer-应用开发者视角</a>
+    </h1>
+  
+
+        
+        <a href="/2026/05/20/Transformer-%E5%BA%94%E7%94%A8%E5%BC%80%E5%8F%91%E8%80%85%E8%A7%86%E8%A7%92/" class="archive-article-date">
+  	<time datetime="2026-05-20T12:49:36.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2026-05-20</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p><strong>1、为什么大模型绕不开Transformer</strong></p>
+<p>在<strong>Transformer</strong>之前<strong>RNN</strong>和<strong>CNN</strong>的问题：</p>
+<p><strong>RNN</strong>：</p>
+<ul>
+<li>梯度消失：记不住长距离依赖</li>
+<li>串行计算：训练速度慢</li>
+</ul>
+<p><strong>CNN：</strong></p>
+<ul>
+<li>局部感受野：只能看到局部窗口，想看全局要堆多层</li>
+<li>长距离依赖弱：难以捕捉相隔很远的词</li>
+</ul>
+<p><strong>Transfromer：</strong></p>
+<ul>
+<li>引入self-attention自注意力机制</li>
+<li>不需要逐步传递信息，一步即可计算</li>
+<li>可利用GPU并行</li>
+</ul>
+<p><strong>Mamba：不可完全替代Transformer</strong></p>
+<p><strong>2、self-attention</strong></p>
+<p>每个token根据上下文动态调整自己的向量表示，所以模糊的prompt分散注意力，结构化的prompt让注意力更容易找到关键信息。</p>
+<p><strong>上下文质量决定注意力分配，注意力分配决定输出质量</strong></p>
+<p><strong>3、Multi-head Attention</strong></p>
+<p>语言之间关系多样：语义、语法、近距离依赖、指代关系等，一个头很难同时捕捉多种关系，多头注意力能够捕捉不同空间的语义并融合。</p>
+<p><strong>一段结构清晰的prompt使每个注意力头快速定位自己需要关注的部分。而一段信息密度相同的文字需要额外的计算开销来提取结构。</strong></p>
+<p><strong>4、Positional Encoding</strong></p>
+<p>Transformer本身是没有顺序的，即self-attention是不关注顺序的，但位置信息很重要，是硬编码进去的。早期利用正余弦函数编码，后期位置编码可训练。</p>
+<p><strong>模型在训练时见过的位置范围有限，即使可以外推，但效果会下降。因此上下文窗口有硬上限，超长上下文质量下降，重要信息放prompt开头或结尾，避免中间迷失问题。</strong></p>
+<p><strong>5、三大架构对比</strong></p>
+<ul>
+<li><p><strong>Encoder-Only：BERT</strong></p>
+<p>  双向注意力，理解能力强，做分类、实体识别、语义相似度效果好。</p>
+</li>
+<li><p><strong>Encoder-Decoder：T5</strong></p>
+<p>  先理解再生成，适合翻译、摘要这类序列到序列的任务。</p>
+</li>
+<li><p><strong>Decoder-Only：GPT</strong></p>
+<p>  单向注意力，自回归生成任务。</p>
+</li>
+</ul>
+<p><strong>Decoder-Only的Scaling效果好、即使是语言生成模型，通过prompt也能理解、任务统一就是预测下一个token训练效果好。</strong></p>
+<p><strong>对应用开发的启示：大模型的本质是续写，prompt的结构和位置影响生成质量。system prompt放开头定基调，关键指令放结尾定方向。</strong></p>
+<p><strong>6、Transformer的局限性</strong></p>
+<ul>
+<li><strong>O(n^2)的计算复杂度</strong>:token计费成本平方级增长</li>
+<li><strong>位置编码的外推问题</strong>：超长文本位置不可靠。RoPE等可缓解，但不是根治</li>
+<li><strong>中间迷失</strong>:关键信息放prompt开头和结尾</li>
+<li><strong>串行生成</strong>:生成比理解慢得多</li>
+</ul>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2026/05/20/Transformer-%E5%BA%94%E7%94%A8%E5%BC%80%E5%8F%91%E8%80%85%E8%A7%86%E8%A7%92/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-利用Github搭建自己的博客" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     

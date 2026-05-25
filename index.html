@@ -126,6 +126,117 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-Agent-and-LLM" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2026/05/25/Agent-and-LLM/">Agent and LLM</a>
+    </h1>
+  
+
+        
+        <a href="/2026/05/25/Agent-and-LLM/" class="archive-article-date">
+  	<time datetime="2026-05-25T04:43:17.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2026-05-25</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h3 id="1-什么是Function-Calling"><a href="#1-什么是Function-Calling" class="headerlink" title="1. 什么是Function Calling"></a>1. 什么是Function Calling</h3><p><strong>过去</strong> ：<code>LLM</code>需要调用工具，输出的自然语言，<code>harness</code>通过手写多个<code>if-else</code>来匹配 or 猜测<code>LLM</code>想调用的工具。</p>
+<p><strong>问题</strong> ：<code>LLM</code>每次输出的文本不一定，可能出现格式错误、参数错误、甚至拼写错误、大小写错误等问题，与写死的<code>if-else</code>不一定能完全匹配，可靠性低。</p>
+<p><strong>解决方案</strong>： <code>Function Calling</code>。由<code>harness</code>主动提供所有可调用的工具，让<code>LLM</code>自主决策选择工具调用。其中每个工具定义都是统一的<code>Json Schema</code>格式，<code>LLM</code>调用工具时输出结构化的<code>Json</code>调用请求。</p>
+<p><strong>为什么更可靠</strong>：Function Calling 不是靠”猜”文本。工具定义通过 API 传给模型，模型在训练时就被要求输出合法 JSON，API 层还会校验 schema。输出格式由模型保证，不再依赖 harne ss 的正则匹配。</p>
+<p><strong>工具定义</strong>： 不同的提供商对应的格式不同，下面举例<code>Anthropic</code>的格式。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">TOOLS = [&#123;</span><br><span class="line">    <span class="string">&quot;name&quot;</span>: <span class="string">&quot;bash&quot;</span>, <span class="comment">#工具名称</span></span><br><span class="line">    <span class="string">&quot;description&quot;</span>: <span class="string">&quot;Run a shell command.&quot;</span>, <span class="comment">#工具描述</span></span><br><span class="line">    <span class="string">&quot;input_schema&quot;</span>: &#123;</span><br><span class="line">        <span class="string">&quot;type&quot;</span>: <span class="string">&quot;object&quot;</span>, </span><br><span class="line">        <span class="string">&quot;properties&quot;</span>: &#123;<span class="string">&quot;command&quot;</span>: &#123;<span class="string">&quot;type&quot;</span>: <span class="string">&quot;string&quot;</span>&#125;&#125;, <span class="comment">#所有参数</span></span><br><span class="line">        <span class="string">&quot;required&quot;</span>: [<span class="string">&quot;command&quot;</span>] <span class="comment">#必须的参数</span></span><br><span class="line">    &#125;&#125;, <span class="comment">#指定模型调用工具时的输出格式</span></span><br><span class="line">]</span><br></pre></td></tr></table></figure>
+<p>其中<strong>description</strong>字段是决定<code>LLM</code>是否调用工具的关键，因此<strong>description</strong>要写的清晰、明确。</p>
+<p><strong>模型回复</strong>：<code>LLM</code>每次的输出是一个 <code>Message</code> 对象。</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>response.id</code></td>
+<td>消息 ID，如 <code>&quot;msg_abc123...&quot;</code></td>
+</tr>
+<tr>
+<td><code>response.model</code></td>
+<td>使用的模型名</td>
+</tr>
+<tr>
+<td><code>response.type</code></td>
+<td>固定 <code>&quot;message&quot;</code></td>
+</tr>
+<tr>
+<td><code>response.stop_reason</code></td>
+<td><code>&quot;end_turn&quot;</code> &#x2F; <code>&quot;tool_use&quot;</code> &#x2F; <code>&quot;max_tokens&quot;</code></td>
+</tr>
+<tr>
+<td><code>response.content</code></td>
+<td><strong>核心</strong>：block 列表</td>
+</tr>
+</tbody></table>
+<p><code>response.content</code> 中的每个 block 有两种类型：</p>
+<h3 id="TextBlock（文字回复）"><a href="#TextBlock（文字回复）" class="headerlink" title="TextBlock（文字回复）"></a>TextBlock（文字回复）</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">block.type → &quot;text&quot;</span><br><span class="line">block.text → &quot;我来查一下...&quot;</span><br></pre></td></tr></table></figure>
+
+<h3 id="ToolUseBlock（工具调用）"><a href="#ToolUseBlock（工具调用）" class="headerlink" title="ToolUseBlock（工具调用）"></a>ToolUseBlock（工具调用）</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">block.type  → &quot;tool_use&quot;</span><br><span class="line">block.id    → &quot;toolu_abc123...&quot;</span><br><span class="line">block.name  → &quot;bash&quot;</span><br><span class="line">block.input → &#123;&quot;command&quot;: &quot;ls -la&quot;&#125;    ← Anthropic SDK 已经把 JSON 字符串解析成dict，可直接用</span><br></pre></td></tr></table></figure>
+
+<p><strong>并行调度</strong>：一次回复可调度多个工具，减少交互轮次。多个独立操作一次发起，互不等待。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">response.content = [</span><br><span class="line">    TextBlock(<span class="built_in">type</span>=<span class="string">&quot;text&quot;</span>, text=<span class="string">&quot;我来查一下&quot;</span>),</span><br><span class="line">    ToolUseBlock(<span class="built_in">type</span>=<span class="string">&quot;tool_use&quot;</span>, <span class="built_in">id</span>=<span class="string">&quot;toolu_1&quot;</span>, name=<span class="string">&quot;bash&quot;</span>, <span class="built_in">input</span>=&#123;<span class="string">&quot;command&quot;</span>: <span class="string">&quot;ls&quot;</span>&#125;),</span><br><span class="line">    ToolUseBlock(<span class="built_in">type</span>=<span class="string">&quot;tool_use&quot;</span>, <span class="built_in">id</span>=<span class="string">&quot;toolu_2&quot;</span>, name=<span class="string">&quot;read_file&quot;</span>, <span class="built_in">input</span>=&#123;<span class="string">&quot;path&quot;</span>: <span class="string">&quot;x.py&quot;</span>&#125;),</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
+
+
+
+
+
+
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2026/05/25/Agent-and-LLM/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-learn-claude-code" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -266,7 +377,8 @@
 <h2 id="Chapter-5：Skill-Loading"><a href="#Chapter-5：Skill-Loading" class="headerlink" title="Chapter 5：Skill Loading"></a>Chapter 5：Skill Loading</h2><h3 id="1-核心问题"><a href="#1-核心问题" class="headerlink" title="1. 核心问题"></a>1. 核心问题</h3><p>当解决某个特定领域的问题时，需要一些特别的  <code>prompt</code>，把不同领域的这些<code>prompt</code>全塞给<code>LLM</code>会占据大量上下文。解决方法：把每个领域需要的所有内容整理为一个<code>skill</code>，只将每个<code>skill</code>的大概描述给到<code>LLM</code>，当<code>LLM</code>认为需要用到某个<code>skill</code>时再加载相关内容，实现按需加载。</p>
 <h3 id="2-工作原理"><a href="#2-工作原理" class="headerlink" title="2. 工作原理"></a>2. 工作原理</h3><p>所有的<code>skill</code>整理为目录，统一放在<code>skills</code>目录下。每个具体<code>skill</code>目录下必须有一个<code>skill.md</code>文件，文件开头的元数据<code>meta</code>格式统一：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line">name:skill name</span><br><span class="line">description:description for skill or null</span><br><span class="line">tags:tags for skill or null</span><br><span class="line">---</span><br></pre></td></tr></table></figure>
-<p>这部分内容会统一给<code>LLM</code>，如果<code>LLM</code>决定加载这个<code>skill</code>，才会将<code>skill.md</code>后面的<code>body</code>内容继续传给 LLM。除了这个必须的<code>skill.md</code>，每个<code>skill</code>目录下还可提供<code>references</code>和<code>scripts</code>，同样是按需加载，需要时才调用工具加载。</p>
+<p>这部分内容会统一给<code>LLM</code>，如果<code>LLM</code>决定加载这个<code>skill</code>，才会将<code>skill.md</code>后面的<code>body</code>内容继续传给 LLM。</p>
+<p>除了这个必须的<code>skill.md</code>，每个<code>skill</code>目录下还可提供<code>references</code>和<code>scripts</code>，同样是按需加载，需要时才调用工具加载。</p>
 <h3 id="3-Skill-Loader"><a href="#3-Skill-Loader" class="headerlink" title="3. Skill Loader"></a>3. Skill Loader</h3><p><code>Skill Loader</code>收集所有<code>skill description</code>，并加载需要的<code>skill content</code></p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">SkillLoader</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, skills_dir: Path</span>):</span><br><span class="line">        <span class="variable language_">self</span>.skills = &#123;&#125;</span><br><span class="line">        <span class="keyword">for</span> f <span class="keyword">in</span> <span class="built_in">sorted</span>(skills_dir.rglob(<span class="string">&quot;SKILL.md&quot;</span>)):</span><br><span class="line">            text = f.read_text()</span><br><span class="line">            meta, body = <span class="variable language_">self</span>._parse_frontmatter(text)</span><br><span class="line">            name = meta.get(<span class="string">&quot;name&quot;</span>, f.parent.name)</span><br><span class="line">            <span class="variable language_">self</span>.skills[name] = &#123;<span class="string">&quot;meta&quot;</span>: meta, <span class="string">&quot;body&quot;</span>: body&#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">get_descriptions</span>(<span class="params">self</span>) -&gt; <span class="built_in">str</span>:</span><br><span class="line">        lines = []</span><br><span class="line">        <span class="keyword">for</span> name, skill <span class="keyword">in</span> <span class="variable language_">self</span>.skills.items():</span><br><span class="line">            desc = skill[<span class="string">&quot;meta&quot;</span>].get(<span class="string">&quot;description&quot;</span>, <span class="string">&quot;&quot;</span>)</span><br><span class="line">            lines.append(<span class="string">f&quot;  - <span class="subst">&#123;name&#125;</span>: <span class="subst">&#123;desc&#125;</span>&quot;</span>)</span><br><span class="line">        <span class="keyword">return</span> <span class="string">&quot;\n&quot;</span>.join(lines)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">get_content</span>(<span class="params">self, name: <span class="built_in">str</span></span>) -&gt; <span class="built_in">str</span>:</span><br><span class="line">        skill = <span class="variable language_">self</span>.skills.get(name)</span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">not</span> skill:</span><br><span class="line">            <span class="keyword">return</span> <span class="string">f&quot;Error: Unknown skill &#x27;<span class="subst">&#123;name&#125;</span>&#x27;.&quot;</span></span><br><span class="line">        <span class="keyword">return</span> <span class="string">f&quot;&lt;skill name=\&quot;<span class="subst">&#123;name&#125;</span>\&quot;&gt;\n<span class="subst">&#123;skill[<span class="string">&#x27;body&#x27;</span>]&#125;</span>\n&lt;/skill&gt;&quot;</span></span><br></pre></td></tr></table></figure>
 
@@ -277,6 +389,42 @@
 
 <h3 id="6-System-Prompt"><a href="#6-System-Prompt" class="headerlink" title="6. System Prompt"></a>6. System Prompt</h3><p>提示<code>LLM</code>可以加载外部知识，并通过<code>SKILL_LOADER.get_descriptions()</code>将所有<code>skill descriptions</code>告知<code>LLM</code>。</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">SYSTEM = f&quot;&quot;&quot;You are a coding agent at &#123;WORKDIR&#125;.</span><br><span class="line">Use load_skill to access specialized knowledge before tackling unfamiliar topics.</span><br><span class="line"></span><br><span class="line">Skills available:</span><br><span class="line">&#123;SKILL_LOADER.get_descriptions()&#125;&quot;&quot;&quot;</span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="Chapter-6：Context-Compact"><a href="#Chapter-6：Context-Compact" class="headerlink" title="Chapter 6：Context Compact"></a>Chapter 6：Context Compact</h2><h3 id="1-核心问题-1"><a href="#1-核心问题-1" class="headerlink" title="1. 核心问题"></a>1. 核心问题</h3><p>多轮对话上下文太大，通过压缩上下文换来无限对话。</p>
+<p>相关常量定义：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">THRESHOLD = <span class="number">50000</span>          <span class="comment"># 触发 auto_compact 的 token 估算阈值</span></span><br><span class="line">KEEP_RECENT = <span class="number">3</span>            <span class="comment"># micro_compact 保留最近几次 tool_result</span></span><br><span class="line">PRESERVE_RESULT_TOOLS = &#123;<span class="string">&quot;read_file&quot;</span>&#125;  <span class="comment"># 这些工具的输出不压缩（参考材料）</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">estimate_tokens</span>(<span class="params">messages: <span class="built_in">list</span></span>) -&gt; <span class="built_in">int</span>:</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">len</span>(<span class="built_in">str</span>(messages)) // <span class="number">4</span>     <span class="comment"># 粗略估算：~4 字符 = 1 token</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>第一层（micro_compact）</strong>：每轮调用 LLM 前，将旧的 tool_result 内容替换为 <code>[Previous: used {tool_name}]</code>，保留最近 <code>KEEP_RECENT</code> 条和 <code>PRESERVE_RESULT_TOOLS</code> 中的内容。</li>
+<li><strong>第二层（auto_compact）</strong>：第一层压缩后 token 仍超过 <code>THRESHOLD</code>，则自动调用 LLM 生成摘要，替换整个 messages。</li>
+<li><strong>第三层（manual compact）</strong>：token 未超阈值但 LLM 自己觉得上下文混乱时，主动调用 <code>compact</code> 工具请求压缩。</li>
+</ul>
+<h3 id="2-第一层实现"><a href="#2-第一层实现" class="headerlink" title="2. 第一层实现"></a>2. 第一层实现</h3><p><strong>micro_compact</strong>: 每次 LLM 调用前, 将旧的 tool result 替换为占位符</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">micro_compact</span>(<span class="params">messages: <span class="built_in">list</span></span>) -&gt; <span class="built_in">list</span>:</span><br><span class="line">    tool_results = []</span><br><span class="line">    <span class="keyword">for</span> msg_idx, msg <span class="keyword">in</span> <span class="built_in">enumerate</span>(messages):</span><br><span class="line">        ...</span><br><span class="line">        tool_results.append((msg_idx, part_idx, part))</span><br></pre></td></tr></table></figure>
+<p>记录每一次工具调用的<code>tool_use_id</code>、<code>output</code>等相关信息</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> <span class="built_in">len</span>(tool_results) &lt;= KEEP_RECENT:</span><br><span class="line">    <span class="keyword">return</span> messages</span><br></pre></td></tr></table></figure>
+<p><code>KEEP_RECENT</code>:最近几次工具调用结果要保留，让<code>LLM</code>能够获得最新信息。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">to_clear = tool_results[:-KEEP_RECENT]</span><br><span class="line"><span class="keyword">for</span> _, _, result <span class="keyword">in</span> to_clear:</span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">if</span> tool_name <span class="keyword">in</span> PRESERVE_RESULT_TOOLS:</span><br><span class="line">        <span class="keyword">continue</span></span><br><span class="line">    result[<span class="string">&quot;content&quot;</span>] = <span class="string">f&quot;[Previous: used <span class="subst">&#123;tool_name&#125;</span>]&quot;</span></span><br><span class="line"><span class="keyword">return</span> messages</span><br></pre></td></tr></table></figure>
+<p>在<code>PRESERVE_RESULT_TOOLS</code>中的结果要保留，比如<code>read_file</code>。</p>
+<p>这里的<code>result</code>是引用，<code>messages</code>会同步修改。<code>messages</code>结构完全不变，只是内容减少。</p>
+<h3 id="3-第二层实现"><a href="#3-第二层实现" class="headerlink" title="3. 第二层实现"></a>3. 第二层实现</h3><p><strong>auto_compact</strong>: 经过第一层压缩后，<code>token</code>仍然超过阈值时, 保存完整对话到磁盘, 让 LLM 做摘要。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">auto_compact</span>(<span class="params">messages: <span class="built_in">list</span></span>) -&gt; <span class="built_in">list</span>:</span><br><span class="line">    <span class="comment"># Save full transcript to disk</span></span><br><span class="line">    TRANSCRIPT_DIR.mkdir(exist_ok=<span class="literal">True</span>)</span><br><span class="line">    transcript_path = TRANSCRIPT_DIR / <span class="string">f&quot;transcript_<span class="subst">&#123;<span class="built_in">int</span>(time.time())&#125;</span>.jsonl&quot;</span></span><br><span class="line">    <span class="keyword">with</span> <span class="built_in">open</span>(transcript_path, <span class="string">&quot;w&quot;</span>) <span class="keyword">as</span> f:</span><br><span class="line">        <span class="keyword">for</span> msg <span class="keyword">in</span> messages:</span><br><span class="line">            f.write(json.dumps(msg, default=<span class="built_in">str</span>) + <span class="string">&quot;\n&quot;</span>)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&quot;[transcript saved: <span class="subst">&#123;transcript_path&#125;</span>]&quot;</span>)</span><br></pre></td></tr></table></figure>
+<p>将完整对话内容写进磁盘，每次写进的文件用时间戳命名，保证唯一性。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">conversation_text = json.dumps(messages, default=<span class="built_in">str</span>)[-<span class="number">80000</span>:]</span><br><span class="line">response = client.messages.create(</span><br><span class="line">    model=MODEL,</span><br><span class="line">    messages=[&#123;<span class="string">&quot;role&quot;</span>: <span class="string">&quot;user&quot;</span>, <span class="string">&quot;content&quot;</span>:</span><br><span class="line">        <span class="string">&quot;Summarize this conversation for continuity. Include: &quot;</span></span><br><span class="line">        <span class="string">&quot;1) What was accomplished, 2) Current state, 3) Key decisions made. &quot;</span></span><br><span class="line">        <span class="string">&quot;Be concise but preserve critical details.\n\n&quot;</span> + conversation_text&#125;],</span><br><span class="line">    max_tokens=<span class="number">2000</span>,</span><br><span class="line">)</span><br><span class="line">summary = <span class="built_in">next</span>((block.text <span class="keyword">for</span> block <span class="keyword">in</span> response.content <span class="keyword">if</span> <span class="built_in">hasattr</span>(block, <span class="string">&quot;text&quot;</span>)), <span class="string">&quot;&quot;</span>)</span><br><span class="line"><span class="keyword">if</span> <span class="keyword">not</span> summary:</span><br><span class="line">    summary = <span class="string">&quot;No summary generated.&quot;</span></span><br><span class="line"><span class="keyword">return</span> [</span><br><span class="line">    &#123;<span class="string">&quot;role&quot;</span>: <span class="string">&quot;user&quot;</span>, <span class="string">&quot;content&quot;</span>: <span class="string">f&quot;[Conversation compressed. Transcript: <span class="subst">&#123;transcript_path&#125;</span>]\n\n<span class="subst">&#123;summary&#125;</span>&quot;</span>&#125;,</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
+<p>通知<code>LLM</code>压缩对话，<code>prompt</code>要求总结对话要保持连贯性，必须包括的内容有：已完成的操作、当前的状态、关键决策，简洁的同时保留关键细节。</p>
+<p>但有一个缺陷：只将后半部分上下文 <strong><code>json.dumps(messages, default=str)[-80000:]</code></strong> 给<code>LLM</code>，可能丢失前面的信息。压缩完成后前面的堆对话全部“丢弃”，只将摘要 <strong><code>summary</code></strong> 重新交给<code>LLM</code>。</p>
+<h3 id="4-第三层压缩"><a href="#4-第三层压缩" class="headerlink" title="4. 第三层压缩"></a>4. 第三层压缩</h3><p>只有<code>token</code>数量大才会触发第二层压缩，但是<code>LLM</code>也可以自主决定进行内容压缩，比如当上下文比较混乱或结论不明确的时候，通过<code>compact</code>工具调用实现。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">manual_compact = <span class="literal">False</span></span><br><span class="line"><span class="keyword">for</span> block <span class="keyword">in</span> response.content:</span><br><span class="line">    <span class="keyword">if</span> block.<span class="built_in">type</span> == <span class="string">&quot;tool_use&quot;</span>:</span><br><span class="line">        <span class="keyword">if</span> block.name == <span class="string">&quot;compact&quot;</span>:</span><br><span class="line">            manual_compact = <span class="literal">True</span></span><br><span class="line">            output = <span class="string">&quot;Compressing...&quot;</span></span><br><span class="line">    <span class="keyword">else</span>:   ...</span><br><span class="line">...</span><br><span class="line"><span class="keyword">if</span> manual_compact:</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;[manual compact]&quot;</span>)</span><br><span class="line">    messages[:] = auto_compact(messages)</span><br><span class="line">    <span class="keyword">return</span></span><br></pre></td></tr></table></figure>
+
+<p>当<code>LLM</code>需要调用<code>compact</code>时，等到本轮所有操作执行完且执行结果都加入上下文后，才压缩上下文，然后直接结束循环，等待用户下一次输入。</p>
+<h3 id="5-System-Prompt-2"><a href="#5-System-Prompt-2" class="headerlink" title="5. System Prompt"></a>5. System Prompt</h3><p>s06 的 System Prompt 去掉了 <code>&quot;Act, don&#39;t explain.&quot;</code>，也没有主动提示 compact 工具——LLM 通过工具描述自己发现 compact 的存在。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SYSTEM = <span class="string">f&quot;You are a coding agent at <span class="subst">&#123;WORKDIR&#125;</span>. Use tools to solve tasks.&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="6-工具注册"><a href="#6-工具注册" class="headerlink" title="6. 工具注册"></a>6. 工具注册</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">TOOL_HANDLERS = &#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="string">&quot;compact&quot;</span>:    <span class="keyword">lambda</span> **kw: <span class="string">&quot;Manual compression requested.&quot;</span>,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="7-工具描述"><a href="#7-工具描述" class="headerlink" title="7. 工具描述"></a>7. 工具描述</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">TOOLS = [</span><br><span class="line">    ...</span><br><span class="line">    &#123;<span class="string">&quot;name&quot;</span>: <span class="string">&quot;compact&quot;</span>, <span class="string">&quot;description&quot;</span>: <span class="string">&quot;Trigger manual conversation compression.&quot;</span>,</span><br><span class="line">     <span class="string">&quot;input_schema&quot;</span>: &#123;<span class="string">&quot;type&quot;</span>: <span class="string">&quot;object&quot;</span>, <span class="string">&quot;properties&quot;</span>: &#123;<span class="string">&quot;focus&quot;</span>: &#123;<span class="string">&quot;type&quot;</span>: <span class="string">&quot;string&quot;</span>, <span class="string">&quot;description&quot;</span>: <span class="string">&quot;What to preserve in the summary&quot;</span>&#125;&#125;&#125;&#125;,</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
+
 
       
 
